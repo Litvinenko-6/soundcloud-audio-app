@@ -47,6 +47,25 @@ function isAudioFile(file: File) {
   return knownAudioExtensions.has(ext);
 }
 
+function inferAudioType(file: File) {
+  if (file.type) {
+    return file.type;
+  }
+
+  const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
+  const byExt: Record<string, string> = {
+    wav: 'audio/wav',
+    mp3: 'audio/mpeg',
+    m4a: 'audio/mp4',
+    aac: 'audio/aac',
+    ogg: 'audio/ogg',
+    flac: 'audio/flac',
+    webm: 'audio/webm'
+  };
+
+  return byExt[ext] ?? 'audio/unknown';
+}
+
 export function DashboardPage() {
   const dispatch = useAppDispatch();
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -67,17 +86,19 @@ export function DashboardPage() {
     }
 
     for (const file of Array.from(fileList)) {
-      if (!isAudioFile(file)) {
+      const durationResult = await getAudioDuration(file).catch(() => null);
+      const likelyAudio = isAudioFile(file);
+
+      if (!likelyAudio && durationResult === null) {
         continue;
       }
 
-      const durationSec = await getAudioDuration(file).catch(() => 0);
       const item: AudioItem = {
         id: `${file.name}-${file.size}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         name: file.name,
-        type: file.type || 'audio/unknown',
+        type: inferAudioType(file),
         sizeKb: Number((file.size / 1024).toFixed(2)),
-        durationSec,
+        durationSec: durationResult ?? 0,
         uploadedAt: new Date().toISOString()
       };
 
