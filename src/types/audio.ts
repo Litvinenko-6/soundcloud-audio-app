@@ -5,4 +5,5 @@ export interface AudioItem {
   sizeKb: number;
   durationSec: number;
   uploadedAt: string;
+  previewUrl: string;
 }

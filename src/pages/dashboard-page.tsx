@@ -103,6 +103,7 @@ export function DashboardPage() {
         name: file.name,
         type: inferAudioType(file),
         sizeKb: Number((file.size / 1024).toFixed(2)),
+        previewUrl: URL.createObjectURL(file),
         durationSec: durationResult ?? 0,
         uploadedAt: new Date().toISOString()
       };
@@ -161,13 +162,14 @@ export function DashboardPage() {
                 <TableHead>Тип</TableHead>
                 <TableHead>Размер (KB)</TableHead>
                 <TableHead>Длительность</TableHead>
+                <TableHead>Прослушать</TableHead>
                 <TableHead>Добавлен</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {rows.length === 0 ? (
                 <TableRow>
-                  <TableCell className="text-muted-foreground" colSpan={5}>
+                  <TableCell className="text-muted-foreground" colSpan={6}>
                     Пока нет аудиофайлов. Нажмите «Добавить файл».
                   </TableCell>
                 </TableRow>
@@ -178,6 +180,9 @@ export function DashboardPage() {
                     <TableCell>{item.type}</TableCell>
                     <TableCell>{item.sizeKb}</TableCell>
                     <TableCell>{formatDuration(item.durationSec)}</TableCell>
+                    <TableCell>
+                      <audio className="h-9 w-56" controls preload="none" src={item.previewUrl} />
+                    </TableCell>
                     <TableCell>{item.uploadedAtFormatted}</TableCell>
                   </TableRow>
                 ))
