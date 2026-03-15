@@ -1,4 +1,4 @@
-import { type ChangeEvent, useMemo, useRef } from 'react';
+import { type ChangeEvent, useMemo, useRef, useState } from 'react';
 import { UploadCloud, LogOut, Flame } from 'lucide-react';
 
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
@@ -69,6 +69,7 @@ function inferAudioType(file: File) {
 export function DashboardPage() {
   const dispatch = useAppDispatch();
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const [uploadMessage, setUploadMessage] = useState<string | null>(null);
   const { items } = useAppSelector((state) => state.audio);
   const userEmail = useAppSelector((state) => state.auth.userEmail);
 
@@ -85,11 +86,15 @@ export function DashboardPage() {
       return;
     }
 
+    let addedCount = 0;
+    let skippedCount = 0;
+
     for (const file of Array.from(fileList)) {
       const durationResult = await getAudioDuration(file).catch(() => null);
       const likelyAudio = isAudioFile(file);
 
       if (!likelyAudio && durationResult === null) {
+        skippedCount += 1;
         continue;
       }
 
@@ -103,6 +108,15 @@ export function DashboardPage() {
       };
 
       dispatch(addAudio(item));
+      addedCount += 1;
+    }
+
+    if (addedCount > 0 && skippedCount === 0) {
+      setUploadMessage(`Успешно добавлено: ${addedCount}`);
+    } else if (addedCount > 0 && skippedCount > 0) {
+      setUploadMessage(`Добавлено: ${addedCount}. Пропущено: ${skippedCount} (не удалось распознать как аудио).`);
+    } else {
+      setUploadMessage('Файл не распознан. На iPhone убедись, что файл загружен из iCloud локально (без статуса "Ошибка").');
     }
 
     event.target.value = '';
@@ -129,12 +143,16 @@ export function DashboardPage() {
         <section className="rounded-2xl border border-border bg-[#111111] p-6">
           <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <h2 className="text-xl font-semibold">Загрузка аудио</h2>
-            <input ref={inputRef} className="hidden" type="file" accept="audio/*" multiple onChange={handleSelect} />
+            <input ref={inputRef} className="hidden" type="file" multiple onChange={handleSelect} />
             <Button className="gap-2 bg-[#ff5500] text-white hover:bg-[#ff6a1f]" onClick={() => inputRef.current?.click()}>
               <UploadCloud className="h-4 w-4" />
               Добавить файл
             </Button>
           </div>
+          <p className="mb-4 text-sm text-muted-foreground">
+            На iPhone файлы из iCloud могут не открываться, пока не скачаны локально в приложении «Файлы».
+          </p>
+          {uploadMessage ? <p className="mb-4 text-sm text-[#ffb07a]">{uploadMessage}</p> : null}
 
           <Table>
             <TableHeader>
