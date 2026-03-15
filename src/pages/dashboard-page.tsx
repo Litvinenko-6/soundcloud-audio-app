@@ -37,6 +37,16 @@ function formatDuration(seconds: number) {
   return `${min}:${sec}`;
 }
 
+function isAudioFile(file: File) {
+  if (file.type.startsWith('audio/')) {
+    return true;
+  }
+
+  const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
+  const knownAudioExtensions = new Set(['wav', 'mp3', 'm4a', 'aac', 'ogg', 'flac', 'webm']);
+  return knownAudioExtensions.has(ext);
+}
+
 export function DashboardPage() {
   const dispatch = useAppDispatch();
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -57,7 +67,7 @@ export function DashboardPage() {
     }
 
     for (const file of Array.from(fileList)) {
-      if (!file.type.startsWith('audio/')) {
+      if (!isAudioFile(file)) {
         continue;
       }
 
